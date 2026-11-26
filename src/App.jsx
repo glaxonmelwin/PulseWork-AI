@@ -1,3 +1,4 @@
+import Auth from "./pages/Auth";
 import { useEffect, useState } from "react";
 import {
   ArrowDown,
@@ -119,7 +120,7 @@ const demoAlerts = [
   },
 ];
 
-function App() {
+function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -162,28 +163,40 @@ function App() {
           <a href="#home" onClick={closeMenu}>
             Home
           </a>
+
           <a href="#features" onClick={closeMenu}>
             Features
           </a>
+
           <a href="#intelligence" onClick={closeMenu}>
             Intelligence
           </a>
+
           <a href="#workflow" onClick={closeMenu}>
             How it works
           </a>
+
           <a href="#about" onClick={closeMenu}>
             About
           </a>
 
-          <a href="#contact" className="mobile-cta" onClick={closeMenu}>
+          {/* LOGIN LINK */}
+          <a href="/login" onClick={closeMenu}>
+            Login
+          </a>
+
+          {/* MOBILE REGISTER BUTTON */}
+          <a href="/register" className="mobile-cta" onClick={closeMenu}>
             Get Started <ArrowUpRight size={16} />
           </a>
         </nav>
 
-        <a href="#contact" className="nav-cta">
+        {/* DESKTOP REGISTER BUTTON */}
+        <a href="/register" className="nav-cta">
           Get Started <ArrowUpRight size={16} />
         </a>
 
+        {/* MOBILE MENU */}
         <button
           className="menu-toggle"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -223,6 +236,7 @@ function App() {
             <a href="#features" className="primary-btn">
               Explore Platform <ArrowRight size={18} />
             </a>
+
             <a href="#intelligence" className="secondary-btn">
               <span className="play-icon">↗</span>
               Explore Intelligence
@@ -233,9 +247,11 @@ function App() {
             <span>
               <ShieldCheck size={17} /> Security-focused
             </span>
+
             <span>
               <Zap size={17} /> AI-assisted insights
             </span>
+
             <span>
               <LockKeyhole size={17} /> Privacy-conscious design
             </span>
@@ -258,10 +274,12 @@ function App() {
             <span className="chip-icon purple">
               <BrainCircuit size={19} />
             </span>
+
             <span>
               <strong>AI Analysis</strong>
               <small>Intelligence active</small>
             </span>
+
             <span className="chip-live"></span>
           </div>
 
@@ -269,6 +287,7 @@ function App() {
             <span className="chip-icon green">
               <ShieldCheck size={19} />
             </span>
+
             <span>
               <strong>Threat Insights</strong>
               <small>Demo visualization</small>
@@ -279,6 +298,7 @@ function App() {
             <span className="chip-icon gold">
               <Radar size={19} />
             </span>
+
             <span>
               <strong>Live Monitoring</strong>
               <small>Concept preview</small>
@@ -305,10 +325,12 @@ function App() {
         <div className="overview-inner">
           <div className="overview-copy reveal">
             <span className="section-kicker">THE PULSEWORK ADVANTAGE</span>
+
             <h2>
               Intelligence that
               <br /> moves <em>with you.</em>
             </h2>
+
             <p>
               Modern security requires more than simply reacting to threats. It
               requires understanding signals, connecting information and making
@@ -324,6 +346,7 @@ function App() {
               <strong>24/7</strong>
               <span>Monitoring concept</span>
             </div>
+
             <div className="stat-item">
               <span className="stat-icon">
                 <BrainCircuit />
@@ -331,6 +354,7 @@ function App() {
               <strong>AI</strong>
               <span>Assisted intelligence</span>
             </div>
+
             <div className="stat-item">
               <span className="stat-icon">
                 <Globe2 />
@@ -346,11 +370,13 @@ function App() {
       <section className="features-section section-padding" id="features">
         <div className="section-heading reveal">
           <span className="section-kicker">POWERFUL CAPABILITIES</span>
+
           <h2>
             Everything you need.
             <br />
             <em>One intelligent platform.</em>
           </h2>
+
           <p>
             Explore the tools and capabilities designed to make cybersecurity
             insights easier to understand.
@@ -367,11 +393,14 @@ function App() {
                   <div className="feature-icon">
                     <Icon size={25} />
                   </div>
+
                   <span>{feature.number}</span>
                 </div>
 
                 <span className="feature-tag">{feature.tag}</span>
+
                 <h3>{feature.title}</h3>
+
                 <p>{feature.description}</p>
 
                 <a href="#intelligence" className="feature-link">
@@ -388,11 +417,13 @@ function App() {
         <div className="intelligence-inner">
           <div className="intelligence-copy reveal">
             <span className="section-kicker">YOUR SECURITY, REIMAGINED</span>
+
             <h2>
               See the bigger
               <br />
               <em>security picture.</em>
             </h2>
+
             <p>
               A unified intelligence experience that turns security indicators
               into clear, organized insights.
@@ -402,12 +433,15 @@ function App() {
               <li>
                 <Check size={17} /> Understand potential threats
               </li>
+
               <li>
                 <Check size={17} /> Organize alerts by severity
               </li>
+
               <li>
                 <Check size={17} /> Explore security indicators
               </li>
+
               <li>
                 <Check size={17} /> Make informed decisions
               </li>
@@ -424,10 +458,12 @@ function App() {
                 <span className="mini-brand">
                   <Activity size={15} />
                 </span>
+
                 <strong>
                   PulseWork <span>Intelligence</span>
                 </strong>
               </div>
+
               <div className="dashboard-status">
                 <span></span> DEMO PREVIEW
               </div>
@@ -439,6 +475,7 @@ function App() {
                   <small>SECURITY OVERVIEW</small>
                   <h3>Threat Intelligence</h3>
                 </div>
+
                 <span className="demo-label">SAMPLE DATA</span>
               </div>
 
@@ -450,6 +487,7 @@ function App() {
                     <Activity size={12} /> Illustrative
                   </small>
                 </div>
+
                 <div className="metric-card">
                   <span>High-risk alerts</span>
                   <strong>08</strong>
@@ -457,6 +495,7 @@ function App() {
                     <ShieldAlert size={12} /> Illustrative
                   </small>
                 </div>
+
                 <div className="metric-card">
                   <span>Analysis status</span>
                   <strong className="metric-active">Active</strong>
@@ -472,6 +511,7 @@ function App() {
                     <strong>Activity overview</strong>
                     <small>Illustrative activity visualization</small>
                   </div>
+
                   <Activity size={19} />
                 </div>
 
@@ -483,9 +523,11 @@ function App() {
                     <span>25</span>
                     <span>0</span>
                   </div>
+
                   <div className="chart-graph">
                     <div className="chart-line line-a"></div>
                     <div className="chart-line line-b"></div>
+
                     <div className="chart-bars">
                       {[35, 52, 43, 72, 48, 65, 39, 84, 56, 74, 47, 68].map(
                         (height, index) => (
@@ -498,6 +540,7 @@ function App() {
                     </div>
                   </div>
                 </div>
+
                 <div className="chart-x-labels">
                   <span>MON</span>
                   <span>TUE</span>
@@ -518,10 +561,12 @@ function App() {
                 {demoAlerts.map((alert, index) => (
                   <div className="alert-row" key={index}>
                     <span className={`alert-indicator ${alert.color}`}></span>
+
                     <div className="alert-info">
                       <strong>{alert.name}</strong>
                       <small>{alert.detail}</small>
                     </div>
+
                     <span className={`alert-level ${alert.color}`}>
                       {alert.level}
                     </span>
@@ -537,11 +582,13 @@ function App() {
       <section className="workflow-section section-padding" id="workflow">
         <div className="section-heading reveal">
           <span className="section-kicker">SIMPLE. SMART. STRUCTURED.</span>
+
           <h2>
             From signals to
             <br />
             <em>security insights.</em>
           </h2>
+
           <p>
             A clear workflow for making sense of complex security information.
           </p>
@@ -554,11 +601,15 @@ function App() {
             return (
               <article className="workflow-card reveal" key={item.title}>
                 <div className="workflow-number">0{index + 1}</div>
+
                 <div className="workflow-icon">
                   <Icon size={29} />
                 </div>
+
                 <h3>{item.title}</h3>
+
                 <p>{item.text}</p>
+
                 {index !== process.length - 1 && (
                   <ArrowRight className="workflow-arrow" size={22} />
                 )}
@@ -574,11 +625,13 @@ function App() {
 
         <div className="about-content reveal">
           <span className="section-kicker">THE VISION BEHIND PULSEWORK</span>
+
           <h2>
             Making digital security
             <br />
             <em>smarter and simpler.</em>
           </h2>
+
           <p>
             PulseWork AI is designed around a simple idea: security intelligence
             should be easier to access, understand and act upon. We bring
@@ -590,9 +643,11 @@ function App() {
             <span>
               <Sparkles size={18} /> Intelligent by design
             </span>
+
             <span>
               <Shield size={18} /> Security focused
             </span>
+
             <span>
               <Zap size={18} /> Built for clarity
             </span>
@@ -603,17 +658,21 @@ function App() {
       {/* CTA */}
       <section className="cta-section" id="contact">
         <div className="cta-glow"></div>
+
         <div className="cta-content reveal">
           <span className="section-kicker">THE FUTURE IS INTELLIGENT</span>
+
           <h2>
             Ready to rethink
             <br />
             <em>cybersecurity?</em>
           </h2>
+
           <p>
             Explore a smarter approach to digital threat intelligence with
             PulseWork AI.
           </p>
+
           <a href="mailto:hello@pulsework.ai" className="cta-button">
             Let's Connect <ArrowUpRight size={19} />
           </a>
@@ -627,6 +686,7 @@ function App() {
             <span className="brand-icon">
               <Activity size={22} />
             </span>
+
             <span>
               PulseWork<span className="brand-ai"> AI.</span>
               <small>INTELLIGENCE IN MOTION</small>
@@ -648,6 +708,7 @@ function App() {
           <span>
             © {new Date().getFullYear()} PulseWork AI. All rights reserved.
           </span>
+
           <span>Designed for intelligent security.</span>
         </div>
       </footer>
@@ -655,4 +716,16 @@ function App() {
   );
 }
 
-export default App;
+/* ==========================================
+   MAIN APP ROUTING
+========================================== */
+
+export default function App() {
+  const path = window.location.pathname;
+
+  if (path === "/login" || path === "/register") {
+    return <Auth />;
+  }
+
+  return <LandingPage />;
+}
