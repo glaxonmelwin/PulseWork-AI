@@ -1,4 +1,6 @@
 import Auth from "./pages/Auth";
+import TaskForm from "./pages/TaskForm";
+
 import { useEffect, useState } from "react";
 import {
   ArrowDown,
@@ -723,8 +725,14 @@ function LandingPage() {
 export default function App() {
   const path = window.location.pathname;
 
+  const isLoggedIn = sessionStorage.getItem("pulseworkLoggedIn") === "true";
+
   if (path === "/login" || path === "/register") {
     return <Auth />;
+  }
+
+  if (path === "/tasks") {
+    return isLoggedIn ? <TaskForm /> : <Auth />;
   }
 
   return <LandingPage />;
