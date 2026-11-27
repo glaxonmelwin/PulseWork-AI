@@ -1319,3 +1319,88 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* PASSWORD STRENGTH INDICATOR */
+
+.password-strength {
+  margin-top: 12px;
+  animation: strengthAppear 0.3s ease;
+}
+
+.strength-heading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 10px;
+  color: #777765;
+}
+
+.strength-weak {
+  color: #d44c4c;
+}
+
+.strength-medium {
+  color: #c58b36;
+}
+
+.strength-good {
+  color: #77934d;
+}
+
+.strength-strong {
+  color: #398653;
+}
+
+.strength-bars {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.strength-bars span {
+  height: 5px;
+  flex: 1;
+  border-radius: 10px;
+  background: #deded2;
+  transition: background 0.3s ease;
+}
+
+.strength-bars span.filled.strength-weak {
+  background: #d44c4c;
+}
+
+.strength-bars span.filled.strength-medium {
+  background: #c58b36;
+}
+
+.strength-bars span.filled.strength-good {
+  background: #77934d;
+}
+
+.strength-bars span.filled.strength-strong {
+  background: #398653;
+}
+
+.password-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 11px;
+  color: #99998b;
+}
+
+.password-rules .rule-passed {
+  color: #54834c;
+  font-weight: 600;
+}
+
+@keyframes strengthAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

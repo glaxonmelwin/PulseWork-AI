@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import {
   Activity,
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
   UserPlus,
   Sparkles,
   Check,
+  X,
 } from "lucide-react";
 
 import "./Auth.css";
@@ -31,13 +33,12 @@ export default function Auth() {
 
   const isRegister = mode === "register";
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
-    getValues,
+    watch,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     defaultValues: {
       name: "",
@@ -48,14 +49,110 @@ export default function Auth() {
     },
   });
 
-  // Switch between Login and Register
+  const password = watch("password", "");
+
+  // PASSWORD VALIDATION RULES
+
+  // STRONG PASSWORD VALIDATION
+
+  const commonPasswords = [
+    "password",
+    "password123",
+    "password@123",
+    "admin123",
+    "qwerty123",
+    "welcome123",
+    "letmein123",
+    "iloveyou123",
+    "abc123456",
+    "pass123456",
+  ];
+
+  // Detect repeated characters (aaaa, 1111, etc.)
+  const hasRepeatedCharacters = (p) => /(.)\1{3,}/i.test(p);
+
+  // Detect simple sequences (abcd, 1234, dcba, 4321)
+  const hasSequence = (p) => {
+    const value = p.toLowerCase();
+
+    for (let i = 0; i <= value.length - 4; i++) {
+      const part = value.slice(i, i + 4);
+
+      const codes = [...part].map((char) => char.charCodeAt(0));
+
+      const ascending = codes.every(
+        (code, index) => index === 0 || code === codes[index - 1] + 1,
+      );
+
+      const descending = codes.every(
+        (code, index) => index === 0 || code === codes[index - 1] - 1,
+      );
+
+      if (ascending || descending) return true;
+    }
+
+    return false;
+  };
+
+  const passwordRules = [
+    {
+      label: "At least 16 characters",
+      test: (p) => p.length >= 16,
+    },
+    {
+      label: "One uppercase letter",
+      test: (p) => /[A-Z]/.test(p),
+    },
+    {
+      label: "One lowercase letter",
+      test: (p) => /[a-z]/.test(p),
+    },
+    {
+      label: "At least 2 numbers",
+      test: (p) => (p.match(/[0-9]/g) || []).length >= 2,
+    },
+    {
+      label: "At least 2 special characters",
+      test: (p) => (p.match(/[^A-Za-z0-9\s]/g) || []).length >= 2,
+    },
+    {
+      label: "No spaces",
+      test: (p) => !/\s/.test(p),
+    },
+    {
+      label: "Not a common password",
+      test: (p) => !commonPasswords.includes(p.toLowerCase()),
+    },
+    {
+      label: "No 4 repeated characters",
+      test: (p) => !hasRepeatedCharacters(p),
+    },
+    {
+      label: "No simple sequences",
+      test: (p) => !hasSequence(p),
+    },
+  ];
+
+  const passedRules = passwordRules.filter((rule) =>
+    rule.test(password),
+  ).length;
+
+  const passwordStrength =
+    passedRules <= 3
+      ? "Weak"
+      : passedRules <= 5
+        ? "Medium"
+        : passedRules <= 7
+          ? "Good"
+          : "Strong";
+
+  // SWITCH BETWEEN LOGIN AND REGISTER
   const changeMode = (nextMode) => {
     setMode(nextMode);
     setMessage("");
-    reset();
-
     setShowPassword(false);
     setShowConfirm(false);
+    reset();
 
     window.history.pushState(
       null,
@@ -64,35 +161,47 @@ export default function Auth() {
     );
   };
 
-  // Form submission
+  // FORM SUBMISSION
+
   const onSubmit = (data) => {
     setMessage("");
 
     if (isRegister) {
-      console.log("========== REGISTRATION DETAILS ==========");
-      console.log(data);
-      console.log("==========================================");
-
-      setMessage(
-        "Registration validated successfully! Backend integration is pending.",
+      const failedRules = passwordRules.filter(
+        (rule) => !rule.test(data.password),
       );
 
+      if (failedRules.length > 0) {
+        setMessage(
+          "Your password is not strong enough. Complete every requirement.",
+        );
+        return;
+      }
+
+      if (data.password !== data.confirmPassword) {
+        setMessage("Passwords do not match.");
+        return;
+      }
+
+      console.log("Registration Details:", {
+        name: data.name,
+        email: data.email,
+        password: "[hidden]",
+      });
+
+      setMessage("Registration validated successfully!");
       return;
     }
 
-    console.log("========== LOGIN DETAILS ==========");
-    console.log({
+    // DEMO LOGIN ONLY
+    console.log("Login Details:", {
       email: data.email,
-      password: data.password,
-      remember: data.remember,
+      password: "[hidden]",
     });
-    console.log("====================================");
 
-    // Demo login session
     sessionStorage.setItem("pulseworkLoggedIn", "true");
     sessionStorage.setItem("pulseworkUser", data.email);
 
-    // Navigate to task creation page
     window.location.href = "/tasks";
   };
 
@@ -245,7 +354,7 @@ export default function Auth() {
               </p>
             </div>
 
-            {/* REACT HOOK FORM */}
+            {/* FORM */}
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* FULL NAME */}
               {isRegister && (
@@ -269,7 +378,7 @@ export default function Auth() {
                   </div>
 
                   {errors.name && (
-                    <p className="auth-message">{errors.name.message}</p>
+                    <small className="auth-error">{errors.name.message}</small>
                   )}
                 </div>
               )}
@@ -295,7 +404,7 @@ export default function Auth() {
                 </div>
 
                 {errors.email && (
-                  <p className="auth-message">{errors.email.message}</p>
+                  <small className="auth-error">{errors.email.message}</small>
                 )}
               </div>
 
@@ -311,9 +420,15 @@ export default function Auth() {
                     placeholder="Enter your password"
                     {...register("password", {
                       required: "Password is required",
-                      minLength: {
-                        value: 8,
-                        message: "Password must contain at least 8 characters",
+                      validate: (value) => {
+                        if (
+                          isRegister &&
+                          passwordRules.some((rule) => !rule.test(value))
+                        ) {
+                          return "Password does not meet all requirements";
+                        }
+
+                        return true;
                       },
                     })}
                   />
@@ -329,7 +444,54 @@ export default function Auth() {
                 </div>
 
                 {errors.password && (
-                  <p className="auth-message">{errors.password.message}</p>
+                  <small className="auth-error">
+                    {errors.password.message}
+                  </small>
+                )}
+
+                {/* LIVE PASSWORD STRENGTH */}
+                {isRegister && password.length > 0 && (
+                  <div className="password-strength">
+                    <div className="strength-heading">
+                      <span>Password Strength</span>
+
+                      <strong
+                        className={`strength-${passwordStrength.toLowerCase()}`}
+                      >
+                        {passwordStrength}
+                      </strong>
+                    </div>
+
+                    <div className="strength-bars">
+                      {[1, 2, 3, 4].map((bar) => (
+                        <span
+                          key={bar}
+                          className={
+                            bar <= Math.min(4, Math.ceil(passedRules / 2.25))
+                              ? `filled strength-${passwordStrength.toLowerCase()}`
+                              : ""
+                          }
+                        />
+                      ))}
+                    </div>
+
+                    <div className="password-rules">
+                      {passwordRules.map((rule, index) => {
+                        const passed = rule.test(password);
+
+                        return (
+                          <div
+                            key={index}
+                            className={passed ? "rule-passed" : ""}
+                          >
+                            {passed ? <Check size={13} /> : <X size={13} />}
+
+                            {rule.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -347,8 +509,7 @@ export default function Auth() {
                       {...register("confirmPassword", {
                         required: "Please confirm your password",
                         validate: (value) =>
-                          value === getValues("password") ||
-                          "Passwords do not match",
+                          value === password || "Passwords do not match",
                       })}
                     />
 
@@ -363,9 +524,9 @@ export default function Auth() {
                   </div>
 
                   {errors.confirmPassword && (
-                    <p className="auth-message">
+                    <small className="auth-error">
                       {errors.confirmPassword.message}
-                    </p>
+                    </small>
                   )}
                 </div>
               )}
@@ -373,12 +534,12 @@ export default function Auth() {
               {/* PASSWORD NOTE */}
               {isRegister && (
                 <div className="password-note">
-                  <Check size={14} />
-                  Use at least 8 characters for your password.
+                  <ShieldCheck size={15} />
+                  Your account requires a strong password.
                 </div>
               )}
 
-              {/* REMEMBER ME */}
+              {/* LOGIN OPTIONS */}
               {!isRegister && (
                 <div className="auth-options">
                   <label className="remember-option">
@@ -401,7 +562,7 @@ export default function Auth() {
                 </div>
               )}
 
-              {/* GENERAL MESSAGE */}
+              {/* MESSAGE */}
               {message && (
                 <div className="auth-message" role="status">
                   {message}
@@ -409,18 +570,8 @@ export default function Auth() {
               )}
 
               {/* SUBMIT BUTTON */}
-              <button
-                type="submit"
-                className="auth-submit"
-                disabled={isSubmitting}
-              >
-                <span>
-                  {isSubmitting
-                    ? "Please wait..."
-                    : isRegister
-                      ? "Create Account"
-                      : "Login"}
-                </span>
+              <button type="submit" className="auth-submit">
+                <span>{isRegister ? "Create Account" : "Login"}</span>
 
                 <ArrowRight size={20} />
               </button>
@@ -433,7 +584,7 @@ export default function Auth() {
               <span></span>
             </div>
 
-            {/* GOOGLE BUTTON */}
+            {/* GOOGLE */}
             <button
               className="google-button"
               type="button"
@@ -445,7 +596,7 @@ export default function Auth() {
               Continue with Google
             </button>
 
-            {/* LOGIN / REGISTER SWITCH */}
+            {/* SWITCH */}
             <div className="auth-switch">
               {isRegister ? (
                 <>
