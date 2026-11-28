@@ -1,10 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-
 import {
-  Activity,
   ShieldCheck,
-  Shield,
   Zap,
   LockKeyhole,
   Mail,
@@ -12,21 +10,20 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ArrowUpRight,
   LogIn,
   UserPlus,
-  Sparkles,
   Check,
   X,
+  Sparkles,
 } from "lucide-react";
-
 import "./Auth.css";
 
 export default function Auth() {
+  const navigate = useNavigate();
+
   const [mode, setMode] = useState(
     window.location.pathname === "/register" ? "register" : "login",
   );
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [message, setMessage] = useState("");
@@ -39,114 +36,28 @@ export default function Auth() {
     watch,
     reset,
     formState: { errors },
-  } = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      remember: false,
-    },
-  });
+  } = useForm();
 
   const password = watch("password", "");
 
   // PASSWORD VALIDATION RULES
-
-  // STRONG PASSWORD VALIDATION
-
-  const commonPasswords = [
-    "password",
-    "password123",
-    "password@123",
-    "admin123",
-    "qwerty123",
-    "welcome123",
-    "letmein123",
-    "iloveyou123",
-    "abc123456",
-    "pass123456",
-  ];
-
-  // Detect repeated characters (aaaa, 1111, etc.)
-  const hasRepeatedCharacters = (p) => /(.)\1{3,}/i.test(p);
-
-  // Detect simple sequences (abcd, 1234, dcba, 4321)
-  const hasSequence = (p) => {
-    const value = p.toLowerCase();
-
-    for (let i = 0; i <= value.length - 4; i++) {
-      const part = value.slice(i, i + 4);
-
-      const codes = [...part].map((char) => char.charCodeAt(0));
-
-      const ascending = codes.every(
-        (code, index) => index === 0 || code === codes[index - 1] + 1,
-      );
-
-      const descending = codes.every(
-        (code, index) => index === 0 || code === codes[index - 1] - 1,
-      );
-
-      if (ascending || descending) return true;
-    }
-
-    return false;
-  };
-
   const passwordRules = [
-    {
-      label: "At least 16 characters",
-      test: (p) => p.length >= 16,
-    },
-    {
-      label: "One uppercase letter",
-      test: (p) => /[A-Z]/.test(p),
-    },
-    {
-      label: "One lowercase letter",
-      test: (p) => /[a-z]/.test(p),
-    },
+    { label: "At least 12 characters", test: (p) => p.length >= 12 },
+    { label: "One uppercase letter", test: (p) => /[A-Z]/.test(p) },
+    { label: "One lowercase letter", test: (p) => /[a-z]/.test(p) },
     {
       label: "At least 2 numbers",
       test: (p) => (p.match(/[0-9]/g) || []).length >= 2,
     },
-    {
-      label: "At least 2 special characters",
-      test: (p) => (p.match(/[^A-Za-z0-9\s]/g) || []).length >= 2,
-    },
-    {
-      label: "No spaces",
-      test: (p) => !/\s/.test(p),
-    },
-    {
-      label: "Not a common password",
-      test: (p) => !commonPasswords.includes(p.toLowerCase()),
-    },
-    {
-      label: "No 4 repeated characters",
-      test: (p) => !hasRepeatedCharacters(p),
-    },
-    {
-      label: "No simple sequences",
-      test: (p) => !hasSequence(p),
-    },
+    { label: "One special character", test: (p) => /[^A-Za-z0-9\s]/.test(p) },
+    { label: "No spaces", test: (p) => !/\s/.test(p) },
   ];
 
   const passedRules = passwordRules.filter((rule) =>
     rule.test(password),
   ).length;
 
-  const passwordStrength =
-    passedRules <= 3
-      ? "Weak"
-      : passedRules <= 5
-        ? "Medium"
-        : passedRules <= 7
-          ? "Good"
-          : "Strong";
-
-  // SWITCH BETWEEN LOGIN AND REGISTER
+  // CHANGE LOGIN / REGISTER MODE
   const changeMode = (nextMode) => {
     setMode(nextMode);
     setMessage("");
@@ -162,19 +73,15 @@ export default function Auth() {
   };
 
   // FORM SUBMISSION
-
   const onSubmit = (data) => {
     setMessage("");
 
+    // =========================
+    // REGISTRATION
+    // =========================
     if (isRegister) {
-      const failedRules = passwordRules.filter(
-        (rule) => !rule.test(data.password),
-      );
-
-      if (failedRules.length > 0) {
-        setMessage(
-          "Your password is not strong enough. Complete every requirement.",
-        );
+      if (!passwordRules.every((rule) => rule.test(data.password))) {
+        setMessage("Please complete all password requirements.");
         return;
       }
 
@@ -183,329 +90,371 @@ export default function Auth() {
         return;
       }
 
-      console.log("Registration Details:", {
-        name: data.name,
-        email: data.email,
-        password: "[hidden]",
+      const users = JSON.parse(localStorage.getItem("pulseworkUsers") || "[]");
+
+      const email = data.email.trim().toLowerCase();
+
+      if (users.some((user) => user.email.toLowerCase() === email)) {
+        setMessage("An account with this email already exists.");
+        return;
+      }
+
+      users.push({
+        name: data.name.trim(),
+        email,
+        password: data.password,
+        role: "employee",
       });
 
-      setMessage("Registration validated successfully!");
+      localStorage.setItem("pulseworkUsers", JSON.stringify(users));
+
+      // AUTOMATIC LOGIN AFTER REGISTRATION
+      sessionStorage.setItem("pulseworkLoggedIn", "true");
+      sessionStorage.setItem("pulseworkUser", email);
+      sessionStorage.setItem("pulseworkRole", "employee");
+
+      navigate("/dashboard");
+
       return;
     }
 
-    // DEMO LOGIN ONLY
-    console.log("Login Details:", {
-      email: data.email,
-      password: "[hidden]",
-    });
+    // =========================
+    // LOGIN
+    // =========================
 
+    const users = JSON.parse(localStorage.getItem("pulseworkUsers") || "[]");
+
+    const email = data.email.trim().toLowerCase();
+
+    const user = users.find(
+      (item) =>
+        item.email.toLowerCase() === email && item.password === data.password,
+    );
+
+    // MANAGER DEMO LOGIN
+    const managerLogin =
+      email === "manager@demo.com" && data.password === "Manager@123";
+
+    if (!user && !managerLogin) {
+      setMessage("Invalid email or password.");
+      return;
+    }
+
+    // SAVE LOGIN INFORMATION
     sessionStorage.setItem("pulseworkLoggedIn", "true");
-    sessionStorage.setItem("pulseworkUser", data.email);
+    sessionStorage.setItem("pulseworkUser", email);
+    sessionStorage.setItem(
+      "pulseworkRole",
+      managerLogin ? "manager" : user.role,
+    );
 
-    window.location.href = "/tasks";
+    console.log("Login successful");
+
+    // COMMON DASHBOARD FOR EVERYONE
+    navigate("/dashboard");
   };
 
   return (
-    <main className="auth-page">
-      {/* LEFT BRAND PANEL */}
-      <section className="auth-left">
-        <div className="auth-background-grid"></div>
-        <div className="auth-orb orb-a"></div>
-        <div className="auth-orb orb-b"></div>
-        <div className="auth-orb orb-c"></div>
+    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-2 overflow-hidden bg-[#f4f0df] text-[#28291b]">
+      {/* LEFT PANEL */}
+      <section className="relative min-h-[650px] lg:min-h-screen overflow-hidden isolate px-8 sm:px-12 lg:px-16 py-10 bg-[radial-gradient(circle_at_75%_15%,#fdf8d9,transparent_28%),radial-gradient(circle_at_30%_90%,#777b45,transparent_50%),linear-gradient(135deg,#eee7c9,#c8c49b_55%,#777b4d)]">
+        {/* Background grid */}
+        <div className="absolute inset-0 -z-10 opacity-20 bg-[linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] bg-[size:45px_45px]" />
 
-        <div className="auth-brand">
-          <div className="auth-brand-icon">
-            <Activity size={29} />
-          </div>
+        {/* Floating orbs */}
+        <div className="auth-orb absolute right-[12%] top-[12%] w-16 h-16 rounded-full bg-gradient-to-br from-[#fff9ce] to-[#777a3c] shadow-[inset_-8px_-8px_15px_#45482040,0_12px_30px_#44482030]" />
 
-          <div>
-            <h2>
-              PulseWork <span>AI</span>
-            </h2>
-            <small>INTELLIGENCE IN MOTION</small>
-          </div>
+        <div className="auth-orb absolute right-[18%] top-[58%] w-7 h-7 rounded-full bg-gradient-to-br from-[#fff9ce] to-[#777a3c]" />
+
+        <div className="auth-orb absolute left-[10%] bottom-[17%] w-10 h-10 rounded-full bg-gradient-to-br from-[#fff9ce] to-[#777a3c]" />
+
+        {/* Brand */}
+        <div className="relative z-10">
+          <h2 className="font-serif text-3xl tracking-tight text-[#34351f]">
+            PulseWork AI
+          </h2>
+
+          <p className="text-[9px] tracking-[3px] mt-1 text-[#34351f]">
+            INTELLIGENCE IN MOTION
+          </p>
         </div>
 
-        <div className="auth-left-content" key={mode}>
-          <div className="auth-label">
-            <Sparkles size={14} />
+        {/* Main heading */}
+        <div key={mode} className="relative z-10 mt-16 max-w-xl auth-content">
+          <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[2px] text-[#656b36]">
+            <Sparkles size={15} />
             INTELLIGENCE MEETS SECURITY
-          </div>
+          </span>
 
-          <h1>
+          <h1 className="font-serif text-4xl sm:text-5xl xl:text-[58px] leading-[1.12] tracking-tight mt-5">
             {isRegister ? (
               <>
                 Build a Safer.
                 <br />
-                <em>Smarter Future.</em>
+                <em className="text-[#626b35]">Smarter Future.</em>
               </>
             ) : (
               <>
                 Smarter Security.
                 <br />
-                <em>Brighter Tomorrow.</em>
+                <em className="text-[#626b35]">Brighter Tomorrow.</em>
               </>
             )}
           </h1>
 
-          <p>
-            {isRegister
-              ? "Join PulseWork AI and explore a smarter approach to cybersecurity intelligence."
-              : "Join PulseWork AI and be a part of the next generation cybersecurity intelligence platform."}
+          <p className="max-w-md mt-5 text-sm leading-7 text-[#383a2d]">
+            Join PulseWork AI and be a part of the next generation cybersecurity
+            intelligence platform.
           </p>
 
-          <div className="auth-benefits">
-            <div>
-              <span>
-                <ShieldCheck size={20} />
-              </span>
-              AI-Powered Threat Detection
-            </div>
-
-            <div>
-              <span>
-                <Zap size={20} />
-              </span>
-              Real-Time Intelligence
-            </div>
-
-            <div>
-              <span>
-                <LockKeyhole size={20} />
-              </span>
-              Enterprise-Grade Security
-            </div>
+          <div className="mt-7 space-y-3">
+            {[
+              { icon: ShieldCheck, text: "AI-Powered Threat Detection" },
+              { icon: Zap, text: "Real-Time Intelligence" },
+              { icon: LockKeyhole, text: "Enterprise-Grade Security" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3 text-sm">
+                <span className="w-7 h-7 rounded-full bg-[#92945d] text-white grid place-items-center shadow-md">
+                  <Icon size={15} />
+                </span>
+                {text}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* DECORATIVE SHIELD */}
-        <div className="shield-scene">
-          <div className="shield-orbit orbit-a"></div>
-          <div className="shield-orbit orbit-b"></div>
-          <div className="shield-orbit orbit-c"></div>
+        {/* Shield illustration */}
+        <div className="absolute right-[-15px] sm:right-5 bottom-12 w-[330px] sm:w-[390px] h-[300px] flex items-center justify-center">
+          <div className="auth-orbit absolute w-[330px] h-[100px] rounded-[50%] border border-[#fff5c9] rotate-[-17deg]" />
 
-          <div className="shield-platform platform-one"></div>
-          <div className="shield-platform platform-two"></div>
+          <div className="auth-orbit auth-orbit-reverse absolute w-[290px] h-[140px] rounded-[50%] border border-[#fff5c9]" />
 
-          <div className="main-shield">
-            <Shield className="shield-outline" size={175} strokeWidth={1.1} />
+          <div className="absolute bottom-5 w-64 h-14 rounded-[50%] border-2 border-[#f9e9a8] bg-[#777b4350] shadow-[0_10px_20px_#34351e50,inset_0_4px_12px_#fff7d4]" />
 
-            <div className="shield-lock">
-              <LockKeyhole size={55} strokeWidth={1.5} />
-            </div>
-
-            <div className="shield-light"></div>
+          <div className="auth-shield relative z-10 text-[#fff5c9] drop-shadow-[0_10px_15px_#4d502c70]">
+            <ShieldCheck size={165} strokeWidth={1.1} />
           </div>
 
-          <div className="shield-particle particle-one"></div>
-          <div className="shield-particle particle-two"></div>
-          <div className="shield-particle particle-three"></div>
-          <div className="shield-particle particle-four"></div>
+          <span className="absolute top-12 left-8 w-3 h-3 rounded-full bg-[#fff4b7] shadow-[0_0_15px_5px_#fff3ae]" />
+
+          <span className="absolute top-24 right-4 w-3 h-3 rounded-full bg-[#fff4b7] shadow-[0_0_15px_5px_#fff3ae]" />
         </div>
 
-        <div className="auth-left-footer">
-          <ShieldCheck size={19} />
-          <span>Secure</span>
-          <i></i>
-          <span>Smart</span>
-          <i></i>
-          <span>Reliable</span>
+        {/* Footer */}
+        <div className="absolute left-8 sm:left-12 lg:left-16 bottom-8 flex items-center gap-3 text-xs text-white">
+          <ShieldCheck size={18} />
+          Secure <i className="w-1 h-1 rounded-full bg-white" />
+          Smart <i className="w-1 h-1 rounded-full bg-white" />
+          Reliable
         </div>
       </section>
 
-      {/* RIGHT FORM PANEL */}
-      <section className="auth-right">
-        <div className="auth-card">
-          {/* LOGIN / REGISTER TABS */}
-          <div className="auth-tabs">
+      {/* RIGHT PANEL */}
+      <section className="relative min-h-screen flex flex-col justify-center items-center px-5 sm:px-10 py-10 bg-[radial-gradient(circle_at_100%_0%,#fffdf0,transparent_38%),linear-gradient(145deg,#f9f5e9,#e9e2ca)]">
+        {/* Glass card */}
+        <div className="w-full max-w-[470px] p-6 sm:p-9 rounded-[28px] border border-white/80 bg-white/40 backdrop-blur-2xl shadow-[0_25px_70px_#77754b20,inset_0_1px_0_white] auth-card">
+          {/* Tabs */}
+          <div className="grid grid-cols-2 p-1 rounded-full bg-[#e9e5d7a6] mb-8">
             <button
-              className={!isRegister ? "active" : ""}
-              onClick={() => changeMode("login")}
               type="button"
+              onClick={() => changeMode("login")}
+              className={`flex items-center justify-center gap-2 py-3 rounded-full text-sm transition-all duration-300 ${
+                !isRegister
+                  ? "text-white bg-gradient-to-r from-[#a5a05c] to-[#62662f] shadow-md"
+                  : "text-[#555545] hover:text-[#77783d]"
+              }`}
             >
-              <LogIn size={19} />
+              <LogIn size={18} />
               Login
             </button>
 
             <button
-              className={isRegister ? "active" : ""}
-              onClick={() => changeMode("register")}
               type="button"
+              onClick={() => changeMode("register")}
+              className={`flex items-center justify-center gap-2 py-3 rounded-full text-sm transition-all duration-300 ${
+                isRegister
+                  ? "text-white bg-gradient-to-r from-[#a5a05c] to-[#62662f] shadow-md"
+                  : "text-[#555545] hover:text-[#77783d]"
+              }`}
             >
-              <UserPlus size={19} />
+              <UserPlus size={18} />
               Register
             </button>
           </div>
 
-          <div className="auth-form-content" key={mode}>
-            {/* FORM HEADING */}
-            <div className="auth-form-heading">
-              <span className="form-kicker">
+          <div key={mode} className="auth-content">
+            {/* Heading */}
+            <div className="mb-6">
+              <span className="text-[9px] tracking-[2px] font-bold text-[#777943]">
                 {isRegister ? "CREATE YOUR ACCOUNT" : "WELCOME TO PULSEWORK"}
               </span>
 
-              <h2>{isRegister ? "Create Account" : "Welcome Back!"}</h2>
+              <h2 className="font-serif text-3xl mt-3 text-[#28291b]">
+                {isRegister ? "Create Account" : "Welcome Back!"}
+              </h2>
 
-              <p>
+              <p className="text-sm text-[#777568] mt-2">
                 {isRegister
                   ? "Start your journey with PulseWork AI."
                   : "Sign in to continue to PulseWork AI"}
               </p>
             </div>
 
-            {/* FORM */}
             <form onSubmit={handleSubmit(onSubmit)}>
-              {/* FULL NAME */}
+              {/* Name */}
               {isRegister && (
-                <div className="auth-input-group input-animate">
-                  <label>Full Name</label>
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold mb-2">
+                    Full Name
+                  </label>
 
                   <div className="auth-input">
-                    <UserRound size={19} />
+                    <UserRound size={18} />
 
                     <input
-                      type="text"
                       placeholder="Enter your full name"
                       {...register("name", {
-                        required: "Full name is required",
+                        required: "Name is required",
                         minLength: {
                           value: 3,
-                          message: "Name must contain at least 3 characters",
+                          message: "Enter at least 3 characters",
                         },
                       })}
                     />
                   </div>
 
                   {errors.name && (
-                    <small className="auth-error">{errors.name.message}</small>
+                    <p className="auth-error">{errors.name.message}</p>
                   )}
                 </div>
               )}
 
-              {/* EMAIL */}
-              <div className="auth-input-group input-animate">
-                <label>Email Address</label>
+              {/* Email */}
+              <div className="mb-4">
+                <label className="block text-xs font-semibold mb-2">
+                  Email Address
+                </label>
 
                 <div className="auth-input">
-                  <Mail size={19} />
+                  <Mail size={18} />
 
                   <input
                     type="email"
-                    placeholder="Enter your email address"
+                    placeholder="Email Address"
                     {...register("email", {
-                      required: "Email address is required",
+                      required: "Email is required",
                       pattern: {
                         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: "Enter a valid email address",
+                        message: "Enter a valid email",
                       },
                     })}
                   />
                 </div>
 
                 {errors.email && (
-                  <small className="auth-error">{errors.email.message}</small>
+                  <p className="auth-error">{errors.email.message}</p>
                 )}
               </div>
 
-              {/* PASSWORD */}
-              <div className="auth-input-group input-animate">
-                <label>Password</label>
+              {/* Password */}
+              <div className="mb-4">
+                <label className="block text-xs font-semibold mb-2">
+                  Password
+                </label>
 
                 <div className="auth-input">
-                  <LockKeyhole size={19} />
+                  <LockKeyhole size={18} />
 
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Password"
                     {...register("password", {
                       required: "Password is required",
-                      validate: (value) => {
-                        if (
-                          isRegister &&
-                          passwordRules.some((rule) => !rule.test(value))
-                        ) {
-                          return "Password does not meet all requirements";
-                        }
-
-                        return true;
-                      },
+                      validate: (value) =>
+                        !isRegister ||
+                        passwordRules.every((rule) => rule.test(value)) ||
+                        "Password does not meet all requirements",
                     })}
                   />
 
                   <button
                     type="button"
-                    className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Toggle password visibility"
+                    className="text-[#77775c] hover:text-[#444820]"
                   >
-                    {showPassword ? <Eye size={19} /> : <EyeOff size={19} />}
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
                 </div>
 
                 {errors.password && (
-                  <small className="auth-error">
-                    {errors.password.message}
-                  </small>
+                  <p className="auth-error">{errors.password.message}</p>
                 )}
 
-                {/* LIVE PASSWORD STRENGTH */}
+                {/* Password strength */}
                 {isRegister && password.length > 0 && (
-                  <div className="password-strength">
-                    <div className="strength-heading">
+                  <div className="mt-3 p-3 rounded-xl bg-white/60">
+                    <div className="flex justify-between text-[11px] mb-2">
                       <span>Password Strength</span>
 
-                      <strong
-                        className={`strength-${passwordStrength.toLowerCase()}`}
-                      >
-                        {passwordStrength}
+                      <strong className="text-[#72773d]">
+                        {passedRules === 6
+                          ? "Strong"
+                          : passedRules >= 4
+                            ? "Good"
+                            : "Weak"}
                       </strong>
                     </div>
 
-                    <div className="strength-bars">
+                    <div className="flex gap-1 mb-3">
                       {[1, 2, 3, 4].map((bar) => (
                         <span
                           key={bar}
-                          className={
-                            bar <= Math.min(4, Math.ceil(passedRules / 2.25))
-                              ? `filled strength-${passwordStrength.toLowerCase()}`
-                              : ""
-                          }
+                          className={`h-1 flex-1 rounded-full ${
+                            bar <= Math.ceil(passedRules / 1.5)
+                              ? "bg-[#858747]"
+                              : "bg-[#dedbc9]"
+                          }`}
                         />
                       ))}
                     </div>
 
-                    <div className="password-rules">
-                      {passwordRules.map((rule, index) => {
-                        const passed = rule.test(password);
+                    <div className="grid grid-cols-2 gap-2">
+                      {passwordRules.map((rule, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-1 text-[9px] ${
+                            rule.test(password)
+                              ? "text-[#69713b]"
+                              : "text-[#a09d8c]"
+                          }`}
+                        >
+                          {rule.test(password) ? (
+                            <Check size={12} />
+                          ) : (
+                            <X size={12} />
+                          )}
 
-                        return (
-                          <div
-                            key={index}
-                            className={passed ? "rule-passed" : ""}
-                          >
-                            {passed ? <Check size={13} /> : <X size={13} />}
-
-                            {rule.label}
-                          </div>
-                        );
-                      })}
+                          {rule.label}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* CONFIRM PASSWORD */}
+              {/* Confirm Password */}
               {isRegister && (
-                <div className="auth-input-group input-animate">
-                  <label>Confirm Password</label>
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold mb-2">
+                    Confirm Password
+                  </label>
 
                   <div className="auth-input">
-                    <LockKeyhole size={19} />
+                    <LockKeyhole size={18} />
 
                     <input
                       type={showConfirm ? "text" : "password"}
-                      placeholder="Confirm your password"
+                      placeholder="Confirm Password"
                       {...register("confirmPassword", {
                         required: "Please confirm your password",
                         validate: (value) =>
@@ -515,117 +464,114 @@ export default function Auth() {
 
                     <button
                       type="button"
-                      className="password-toggle"
                       onClick={() => setShowConfirm(!showConfirm)}
-                      aria-label="Toggle confirm password visibility"
+                      className="text-[#77775c]"
                     >
-                      {showConfirm ? <Eye size={19} /> : <EyeOff size={19} />}
+                      {showConfirm ? <Eye size={18} /> : <EyeOff size={18} />}
                     </button>
                   </div>
 
                   {errors.confirmPassword && (
-                    <small className="auth-error">
+                    <p className="auth-error">
                       {errors.confirmPassword.message}
-                    </small>
+                    </p>
                   )}
                 </div>
               )}
 
-              {/* PASSWORD NOTE */}
-              {isRegister && (
-                <div className="password-note">
-                  <ShieldCheck size={15} />
-                  Your account requires a strong password.
-                </div>
-              )}
-
-              {/* LOGIN OPTIONS */}
+              {/* Remember me */}
               {!isRegister && (
-                <div className="auth-options">
-                  <label className="remember-option">
-                    <input type="checkbox" {...register("remember")} />
-                    <span className="custom-check"></span>
+                <div className="flex justify-between items-center text-[11px] mb-5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="accent-[#777a3e]"
+                      {...register("remember")}
+                    />
                     Remember me
                   </label>
 
                   <button
                     type="button"
-                    className="forgot-link"
                     onClick={() =>
                       setMessage(
-                        "Password recovery will be connected with the backend later.",
+                        "Password recovery will be available after backend integration.",
                       )
                     }
+                    className="text-[#77783d] hover:underline"
                   >
                     Forgot password?
                   </button>
                 </div>
               )}
 
-              {/* MESSAGE */}
+              {/* Message */}
               {message && (
-                <div className="auth-message" role="status">
+                <div className="rounded-lg bg-[#f1e9ce] text-[#696333] text-xs p-3 mb-4">
                   {message}
                 </div>
               )}
 
-              {/* SUBMIT BUTTON */}
-              <button type="submit" className="auth-submit">
-                <span>{isRegister ? "Create Account" : "Login"}</span>
-
-                <ArrowRight size={20} />
+              {/* Submit */}
+              <button
+                type="submit"
+                className="w-full h-12 rounded-full bg-gradient-to-r from-[#aaa45f] to-[#666a32] text-white font-semibold text-sm flex items-center justify-center gap-3 shadow-lg shadow-[#6d703c35] hover:-translate-y-1 hover:shadow-xl hover:brightness-105 active:scale-[.98] transition-all duration-300"
+              >
+                {isRegister ? "Create Account" : "Login"}
+                <ArrowRight size={19} />
               </button>
             </form>
 
-            {/* DIVIDER */}
-            <div className="auth-divider">
-              <span></span>
-              <p>or continue with</p>
-              <span></span>
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-5">
+              <span className="h-px bg-[#d9d4c4] flex-1" />
+
+              <p className="text-[10px] text-[#858272]">or continue with</p>
+
+              <span className="h-px bg-[#d9d4c4] flex-1" />
             </div>
 
-            {/* GOOGLE */}
+            {/* Google login */}
             <button
-              className="google-button"
               type="button"
               onClick={() =>
-                setMessage("Google authentication will be connected later.")
+                setMessage(
+                  "Google sign-in requires backend authentication setup.",
+                )
               }
+              className="w-full h-11 rounded-full bg-white/80 border border-white flex items-center justify-center gap-3 text-xs font-semibold hover:bg-white hover:-translate-y-0.5 transition-all duration-300"
             >
-              <span className="google-g">G</span>
+              <b className="text-lg text-[#4285f4]">G</b>
               Continue with Google
             </button>
 
-            {/* SWITCH */}
-            <div className="auth-switch">
-              {isRegister ? (
-                <>
-                  Already have an account?
-                  <button type="button" onClick={() => changeMode("login")}>
-                    Login here <ArrowUpRight size={16} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  Don't have an account?
-                  <button type="button" onClick={() => changeMode("register")}>
-                    Register here <ArrowUpRight size={16} />
-                  </button>
-                </>
-              )}
+            {/* Switch */}
+            <div className="flex justify-center flex-wrap gap-1 items-center mt-5 text-[11px] text-[#777568]">
+              {isRegister
+                ? "Already have an account?"
+                : "Don't have an account?"}
+
+              <button
+                type="button"
+                onClick={() => changeMode(isRegister ? "login" : "register")}
+                className="flex items-center gap-1 text-[#74783d] font-bold hover:underline"
+              >
+                {isRegister ? "Login here" : "Register here"}
+                <ArrowRight size={14} />
+              </button>
             </div>
           </div>
 
-          {/* CARD FOOTER */}
-          <div className="auth-card-footer">
+          {/* Security footer */}
+          <div className="border-t border-[#dedacb] mt-5 pt-4 flex justify-center items-center gap-2 text-[10px] text-[#81806e]">
             <ShieldCheck size={15} />
             Your security is our priority.
           </div>
         </div>
 
-        <div className="auth-copyright">
+        <p className="mt-5 text-[10px] text-[#999582]">
           © {new Date().getFullYear()} PulseWork AI. All rights reserved.
-        </div>
+        </p>
       </section>
     </main>
   );
